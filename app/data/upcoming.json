@@ -1,0 +1,10 @@
+[
+  {
+    "slug": "event1",
+    "title": "Example event",
+    "image": "/images/upcoming/spring-screening.jpg",
+    "linkUrl": "google.com",
+    "linkText": "Donate",
+    "date": "2/14/26"
+  }
+]
