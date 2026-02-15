@@ -90,7 +90,7 @@ export default function Home() {
     <div className="video-container">
       {/* Background Video */}
       <video className="videobg" autoPlay muted loop playsInline>
-        <source src="/Copy of Sequence 01.mp4" type="video/mp4" />
+        <source src={process.env.NEXT_PUBLIC_HOME_VIDEO_URL} type="video/mp4" />
         Video failed to load
       </video>
 
