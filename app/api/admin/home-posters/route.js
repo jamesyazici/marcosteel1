@@ -3,12 +3,24 @@ import { readBlob, writeBlob } from "@/lib/blobStorage";
 
 const BLOB_FILENAME = "homePosters.json";
 
+const DEFAULT_HOME_POSTERS = {
+  left: { image: "", link: "" },
+  right: { image: "", link: "" },
+};
+
 export async function GET() {
   try {
     const data = await readBlob(BLOB_FILENAME);
-    return NextResponse.json({ ok: true, data: JSON.parse(data) });
+    const parsed = JSON.parse(data);
+    
+    // Ensure it's the right shape (object with left/right, not an array)
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return NextResponse.json({ ok: true, data: DEFAULT_HOME_POSTERS });
+    }
+    
+    return NextResponse.json({ ok: true, data: parsed });
   } catch {
-    return NextResponse.json({ ok: false, data: {} });
+    return NextResponse.json({ ok: true, data: DEFAULT_HOME_POSTERS });
   }
 }
 
