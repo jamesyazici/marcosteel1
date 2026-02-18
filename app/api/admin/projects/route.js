@@ -57,7 +57,10 @@ export async function GET(req) {
 }
 
 export async function PUT(req) {
+  console.log(`[/api/admin/projects PUT] Request received`);
+  
   if (!isAdmin(req)) {
+    console.log(`[/api/admin/projects PUT] ❌ Auth check failed`);
     return NextResponse.json(
       { ok: false, message: "Unauthorized" },
       { status: 401 }
@@ -66,11 +69,14 @@ export async function PUT(req) {
 
   try {
     const body = await req.json();
+    console.log(`[/api/admin/projects PUT] Request body received, type: ${Array.isArray(body) ? 'array' : typeof body}`);
 
     // Admin UI sends the array directly, but allow { projects: [...] } too
     const projects = Array.isArray(body) ? body : body?.projects;
+    console.log(`[/api/admin/projects PUT] Projects count: ${Array.isArray(projects) ? projects.length : 'N/A'}`);
 
     if (!Array.isArray(projects)) {
+      console.log(`[/api/admin/projects PUT] ❌ Invalid payload - not an array`);
       return NextResponse.json(
         { ok: false, message: "Expected an array of projects." },
         { status: 400 }
@@ -80,6 +86,7 @@ export async function PUT(req) {
     // Minimal validation: ensure slug exists and is string
     for (const p of projects) {
       if (!p || typeof p.slug !== "string" || !p.slug.trim()) {
+        console.log(`[/api/admin/projects PUT] ❌ Invalid project slug`);
         return NextResponse.json(
           { ok: false, message: "Each project must have a non-empty slug." },
           { status: 400 }
@@ -87,12 +94,16 @@ export async function PUT(req) {
       }
     }
 
+    console.log(`[/api/admin/projects PUT] Validation passed. Calling writeBlob...`);
     await writeBlob("projects.json", JSON.stringify(projects, null, 2));
+    console.log(`[/api/admin/projects PUT] ✅ Successfully saved to blob`);
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error(`[/api/admin/projects PUT] ❌ Error:`, err?.message || err);
+    console.error(`[/api/admin/projects PUT] Full error:`, err);
     return NextResponse.json(
-      { ok: false, message: "Could not save projects." },
+      { ok: false, message: err?.message || "Could not save projects." },
       { status: 500 }
     );
   }
