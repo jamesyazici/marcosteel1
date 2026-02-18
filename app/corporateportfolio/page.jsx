@@ -1,9 +1,12 @@
-"use client";
+'use server';
 
 import BackButton from "../components/BackButton";
-import projects from "../data/projects.json";
+import { readBlob } from "@/lib/blobStorage";
 
-export default function CorporatePortfolio() {
+export default async function CorporatePortfolio() {
+  // Fetch projects from blob storage (with fallback to static JSON)
+  const projectsJson = await readBlob("projects.json");
+  const projects = JSON.parse(projectsJson || "[]");
   return (
     <>
       <style>{`
