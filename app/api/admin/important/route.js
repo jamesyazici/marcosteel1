@@ -1,11 +1,10 @@
-import fs from "fs/promises";
-import path from "path";
+import { readBlob, writeBlob } from "@/lib/blobStorage";
 
-const filePath = path.join(process.cwd(), "app", "data", "important.json");
+const BLOB_FILENAME = "important.json";
 
 export async function GET() {
   try {
-    const raw = await fs.readFile(filePath, "utf8");
+    const raw = await readBlob(BLOB_FILENAME);
     const data = JSON.parse(raw || "[]");
     return Response.json({ ok: true, data });
   } catch (e) {
@@ -21,7 +20,7 @@ export async function PUT(req) {
       return Response.json({ ok: false, message: "Invalid payload." }, { status: 400 });
     }
 
-    await fs.writeFile(filePath, JSON.stringify(body, null, 2), "utf8");
+    await writeBlob(BLOB_FILENAME, JSON.stringify(body, null, 2));
     return Response.json({ ok: true });
   } catch (e) {
     return Response.json({ ok: false, message: "Could not save important." }, { status: 500 });

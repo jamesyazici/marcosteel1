@@ -1,7 +1,6 @@
 import crypto from "crypto";
-import fs from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
+import { readBlob, writeBlob } from "@/lib/blobStorage";
 
 function sign(value, secret) {
   return crypto.createHmac("sha256", secret).update(value).digest("hex");
@@ -28,7 +27,7 @@ function isAdmin(req) {
   return safeEqual(sig, expected);
 }
 
-const ABOUT_PATH = path.join(process.cwd(), "app", "data", "about.json");
+const BLOB_FILENAME = "about.json";
 
 function normalizePayload(body) {
   const obj = Array.isArray(body) ? body?.[0] : body;
@@ -56,7 +55,7 @@ export async function GET(req) {
   }
 
   try {
-    const raw = await fs.readFile(ABOUT_PATH, "utf8");
+    const raw = await readBlob(BLOB_FILENAME);
     const json = JSON.parse(raw || "[]");
     const first = Array.isArray(json) && json.length ? json : normalizePayload({});
     return NextResponse.json({ ok: true, data: first });
@@ -78,7 +77,7 @@ export async function PUT(req) {
     const body = await req.json();
     const payload = normalizePayload(body);
 
-    await fs.writeFile(ABOUT_PATH, JSON.stringify(payload, null, 2), "utf8");
+    await writeBlob(BLOB_FILENAME, JSON.stringify(payload, null, 2));
 
     return NextResponse.json({ ok: true });
   } catch {

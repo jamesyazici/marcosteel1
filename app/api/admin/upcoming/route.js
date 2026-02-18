@@ -1,7 +1,6 @@
 import crypto from "crypto";
-import fs from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
+import { readBlob, writeBlob } from "@/lib/blobStorage";
 
 function sign(value, secret) {
   return crypto.createHmac("sha256", secret).update(value).digest("hex");
@@ -28,7 +27,7 @@ function isAdmin(req) {
   return safeEqual(sig, expected);
 }
 
-const UPCOMING_PATH = path.join(process.cwd(), "app", "data", "upcoming.json");
+const BLOB_FILENAME = "upcoming.json";
 
 export async function GET(req) {
   if (!isAdmin(req)) {
@@ -36,7 +35,7 @@ export async function GET(req) {
   }
 
   try {
-    const raw = await fs.readFile(UPCOMING_PATH, "utf8");
+    const raw = await readBlob(BLOB_FILENAME);
     const json = JSON.parse(raw || "[]");
     return NextResponse.json({ ok: true, data: Array.isArray(json) ? json : [] });
   } catch {
@@ -69,7 +68,7 @@ export async function PUT(req) {
       }
     }
 
-    await fs.writeFile(UPCOMING_PATH, JSON.stringify(items, null, 2), "utf8");
+    await writeBlob(BLOB_FILENAME, JSON.stringify(items, null, 2));
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false, message: "Could not save upcoming." }, { status: 500 });

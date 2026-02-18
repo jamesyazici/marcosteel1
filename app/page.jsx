@@ -54,7 +54,7 @@ function AdjustablePoster({
               display: "block",
               cursor: "pointer",
               // boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
-              opacity: "0.9",
+              opacity: "0.8",
             }}
           />
         </a>
