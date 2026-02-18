@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { readBlob, writeBlob } from "@/lib/blobStorage";
+import aboutData from "@/app/data/about.json";
 
 function sign(value, secret) {
   return crypto.createHmac("sha256", secret).update(value).digest("hex");
@@ -27,8 +28,6 @@ function isAdmin(req) {
   return safeEqual(sig, expected);
 }
 
-const BLOB_FILENAME = "about.json";
-
 function normalizePayload(body) {
   const obj = Array.isArray(body) ? body?.[0] : body;
   const safe = {
@@ -42,7 +41,6 @@ function normalizePayload(body) {
       : [],
   };
 
-  // Ensure exactly 4 link slots exist
   while (safe.links.length < 4) safe.links.push({ label: "", url: "" });
   safe.links = safe.links.slice(0, 4);
 
@@ -55,15 +53,16 @@ export async function GET(req) {
   }
 
   try {
-    const raw = await readBlob(BLOB_FILENAME);
+    const raw = await readBlob("about.json");
     const json = JSON.parse(raw || "[]");
-    const first = Array.isArray(json) && json.length ? json : normalizePayload({});
+    
+    // If blob has data, use it; otherwise use imported data
+    const first = Array.isArray(json) && json.length > 0 ? json : Array.isArray(aboutData) ? aboutData : normalizePayload({});
     return NextResponse.json({ ok: true, data: first });
   } catch {
-    // If file missing or invalid, return a safe default
     return NextResponse.json({
       ok: true,
-      data: normalizePayload({}),
+      data: Array.isArray(aboutData) ? aboutData : normalizePayload({}),
     });
   }
 }
@@ -77,7 +76,7 @@ export async function PUT(req) {
     const body = await req.json();
     const payload = normalizePayload(body);
 
-    await writeBlob(BLOB_FILENAME, JSON.stringify(payload, null, 2));
+    await writeBlob("about.json", JSON.stringify(payload, null, 2));
 
     return NextResponse.json({ ok: true });
   } catch {

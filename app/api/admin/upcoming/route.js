@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { readBlob, writeBlob } from "@/lib/blobStorage";
+import upcomingData from "@/app/data/upcoming.json";
 
 function sign(value, secret) {
   return crypto.createHmac("sha256", secret).update(value).digest("hex");
@@ -27,19 +28,20 @@ function isAdmin(req) {
   return safeEqual(sig, expected);
 }
 
-const BLOB_FILENAME = "upcoming.json";
-
 export async function GET(req) {
   if (!isAdmin(req)) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const raw = await readBlob(BLOB_FILENAME);
+    const raw = await readBlob("upcoming.json");
     const json = JSON.parse(raw || "[]");
-    return NextResponse.json({ ok: true, data: Array.isArray(json) ? json : [] });
+    
+    // If blob has data, use it; otherwise fall back to imported data
+    const data = Array.isArray(json) && json.length > 0 ? json : upcomingData;
+    return NextResponse.json({ ok: true, data });
   } catch {
-    return NextResponse.json({ ok: false, message: "Could not read upcoming." }, { status: 500 });
+    return NextResponse.json({ ok: true, data: upcomingData });
   }
 }
 
@@ -68,7 +70,7 @@ export async function PUT(req) {
       }
     }
 
-    await writeBlob(BLOB_FILENAME, JSON.stringify(items, null, 2));
+    await writeBlob("upcoming.json", JSON.stringify(items, null, 2));
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false, message: "Could not save upcoming." }, { status: 500 });

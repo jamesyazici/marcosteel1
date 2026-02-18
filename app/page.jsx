@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import homePostersData from "./data/homePosters.json";
 
 function AdjustablePoster({
   src,
@@ -64,27 +65,13 @@ function AdjustablePoster({
 }
 
 export default function Home() {
-  const [homePosters, setHomePosters] = useState({
+  const defaultPosters = {
     left: { image: "", link: "" },
     right: { image: "", link: "" },
-  });
+  };
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch("/api/admin/home-posters", {
-          cache: "no-store",
-        });
-        const json = await res.json();
-        if (json?.ok && json.data) {
-          setHomePosters(json.data);
-        }
-      } catch (e) {
-        console.error("Could not load home posters");
-      }
-    }
-    load();
-  }, []);
+  // Initialize from imported JSON data
+  const [homePosters, setHomePosters] = useState(homePostersData || defaultPosters);
 
   return (
     <div className="video-container">

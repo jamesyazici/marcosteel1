@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { readBlob, writeBlob } from "@/lib/blobStorage";
+import projectsData from "@/app/data/projects.json";
 
 function sign(value, secret) {
   return crypto.createHmac("sha256", secret).update(value).digest("hex");
@@ -27,8 +28,6 @@ function isAdmin(req) {
   return safeEqual(sig, expected);
 }
 
-const BLOB_FILENAME = "projects.json";
-
 export async function GET(req) {
   if (!isAdmin(req)) {
     return NextResponse.json(
@@ -38,16 +37,22 @@ export async function GET(req) {
   }
 
   try {
-    const raw = await readBlob(BLOB_FILENAME);
+    // Try to read from blob storage first (user-edited data)
+    const raw = await readBlob("projects.json");
     const json = JSON.parse(raw || "[]");
-
-    // IMPORTANT: admin UI expects { ok: true, data: [...] }
-    return NextResponse.json({ ok: true, data: Array.isArray(json) ? json : [] });
+    
+    // If blob has data, use it
+    if (Array.isArray(json) && json.length > 0) {
+      return NextResponse.json({ ok: true, data: json });
+    }
+    
+    // Otherwise, fall back to the imported data
+    const data = Array.isArray(projectsData) ? projectsData : [];
+    return NextResponse.json({ ok: true, data });
   } catch {
-    return NextResponse.json(
-      { ok: false, message: "Could not read projects." },
-      { status: 500 }
-    );
+    // Fall back to imported data if anything fails
+    const data = Array.isArray(projectsData) ? projectsData : [];
+    return NextResponse.json({ ok: true, data });
   }
 }
 
@@ -82,7 +87,7 @@ export async function PUT(req) {
       }
     }
 
-    await writeBlob(BLOB_FILENAME, JSON.stringify(projects, null, 2));
+    await writeBlob("projects.json", JSON.stringify(projects, null, 2));
 
     return NextResponse.json({ ok: true });
   } catch {

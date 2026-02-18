@@ -65,7 +65,7 @@ async function uploadImage(file, { scope = "projects", slug = "misc" } = {}) {
   fd.append("scope", scope);
   fd.append("slug", slug);
 
-  const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+  const res = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || !json.ok) throw new Error(json.message || "Upload failed.");
   return json.path;
@@ -76,7 +76,7 @@ async function uploadPhotoToPhotosFolder(file) {
   const fd = new FormData();
   fd.append("file", file);
 
-  const res = await fetch("/api/admin/photos", { method: "POST", body: fd });
+  const res = await fetch("/api/admin/photos", { method: "POST", body: fd, credentials: "include" });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || !json.ok) throw new Error(json.message || "Upload failed.");
   return json; // {name, url}
@@ -262,7 +262,7 @@ function PhotosManager({ photos, setPhotos, setStatus }) {
   async function reload() {
     setErr("");
     try {
-      const res = await fetch("/api/admin/photos", { cache: "no-store" });
+      const res = await fetch("/api/admin/photos", { cache: "no-store", credentials: "include" });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok) throw new Error(json.message || "Could not load photos");
       setPhotos(Array.isArray(json.data) ? json.data : []);
@@ -295,7 +295,7 @@ function PhotosManager({ photos, setPhotos, setStatus }) {
     setErr("");
     setBusy(true);
     try {
-      const res = await fetch(`/api/admin/photos?name=${encodeURIComponent(name)}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/photos?name=${encodeURIComponent(name)}`, { method: "DELETE", credentials: "include" });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok) throw new Error(json.message || "Delete failed");
       await reload();
@@ -423,17 +423,17 @@ export default function AdminPage() {
 
     try {
       const [pRes, cRes, iRes, uRes] = await Promise.all([
-        fetch("/api/admin/projects", { cache: "no-store" }),
-        fetch("/api/admin/contact", { cache: "no-store" }),
-        fetch("/api/admin/important", { cache: "no-store" }),
-        fetch("/api/admin/upcoming", { cache: "no-store" }),
+        fetch("/api/admin/projects", { cache: "no-store", credentials: "include" }),
+        fetch("/api/admin/contact", { cache: "no-store", credentials: "include" }),
+        fetch("/api/admin/important", { cache: "no-store", credentials: "include" }),
+        fetch("/api/admin/upcoming", { cache: "no-store", credentials: "include" }),
       ]);
 
       const pJson = await pRes.json().catch(() => ({}));
       const cJson = await cRes.json().catch(() => ({}));
       const iJson = await iRes.json().catch(() => ({}));
       const uJson = await uRes.json().catch(() => ({}));
-      const hRes = await fetch("/api/admin/home-posters", { cache: "no-store" });
+      const hRes = await fetch("/api/admin/home-posters", { cache: "no-store", credentials: "include" });
       const hJson = await hRes.json().catch(() => ({}));
       if (hRes.ok && hJson.ok) setHomePosters(hJson.data);
 
@@ -571,6 +571,7 @@ export default function AdminPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(projectsDraft, null, 2),
+        credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok) throw new Error(json.message || "Save failed");
@@ -644,6 +645,7 @@ export default function AdminPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(upcomingDraft, null, 2),
+        credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok) throw new Error(json.message || "Save failed");
@@ -694,6 +696,7 @@ export default function AdminPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload, null, 2),
+        credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok) throw new Error(json.message || "Save failed.");
@@ -712,6 +715,7 @@ export default function AdminPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(homePosters, null, 2),
+        credentials: "include",
       });
 
       const json = await res.json().catch(() => ({}));
@@ -739,6 +743,7 @@ export default function AdminPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload, null, 2),
+        credentials: "include",
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok) throw new Error(json.message || "Save failed.");
@@ -883,7 +888,7 @@ export default function AdminPage() {
             <button
               className="tabBtn"
               onClick={async () => {
-                await fetch("/api/admin/logout", { method: "POST" }).catch(() => {});
+                await fetch("/api/admin/logout", { method: "POST", credentials: "include" }).catch(() => {});
                 window.location.href = "/admin/login";
               }}
             >
