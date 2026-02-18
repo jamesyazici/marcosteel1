@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { readBlob, writeBlob } from "@/lib/blobStorage";
 import projectsData from "@/app/data/projects.json";
 
@@ -97,6 +98,15 @@ export async function PUT(req) {
     console.log(`[/api/admin/projects PUT] Validation passed. Calling writeBlob...`);
     await writeBlob("projects.json", JSON.stringify(projects, null, 2));
     console.log(`[/api/admin/projects PUT] ✅ Successfully saved to blob`);
+
+    // Revalidate server-rendered pages that depend on projects.json so changes show immediately
+    try {
+      revalidatePath("/corporateportfolio");
+      revalidatePath("/");
+      console.log(`[/api/admin/projects PUT] ✅ Revalidated paths`);
+    } catch (e) {
+      console.log(`[/api/admin/projects PUT] Could not revalidate paths:`, e?.message);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {
