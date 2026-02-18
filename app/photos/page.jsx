@@ -1,28 +1,12 @@
-import fs from "fs/promises";
-import path from "path";
-import BackButton from "../components/BackButton";
+'use server';
 
-function isImageFile(name) {
-  return /\.(png|jpe?g|webp|gif)$/i.test(name || "");
-}
+import BackButton from "../components/BackButton";
+import { readBlob } from "@/lib/blobStorage";
 
 export default async function PhotosPage() {
-  // Read files from /public/images/photos
-  const photosDir = path.join(process.cwd(), "public", "images", "photos");
-
-  let files = [];
-  try {
-    const dirents = await fs.readdir(photosDir, { withFileTypes: true });
-    files = dirents
-      .filter((d) => d.isFile())
-      .map((d) => d.name)
-      .filter(isImageFile)
-      .sort((a, b) => a.localeCompare(b)); // optional: alphabetical
-  } catch {
-    files = [];
-  }
-
-  const photoSrcs = files.map((f) => `/images/photos/${f}`);
+  // Fetch photos from blob storage (with fallback to static JSON)
+  const photosJson = await readBlob("photos.json");
+  const photos = JSON.parse(photosJson || "[]");
 
   return (
     <>
@@ -181,17 +165,15 @@ export default async function PhotosPage() {
           <div className="mainbody">
             <div className="sectionTitle">GALLERY</div>
             <div className="sectionBody">
-              {photoSrcs.length === 0 ? (
+              {photos.length === 0 ? (
                 <div className="empty">
-                  No photos found in <b>public/images/photos</b>.
-                  <br />
-                  Add image files (jpg/png/webp/gif) there and refresh.
+                  No photos available.
                 </div>
               ) : (
                 <div className="masonry">
-                  {photoSrcs.map((src) => (
-                    <div key={src} className="photoCard">
-                      <img src={src} alt="Photo" loading="lazy" />
+                  {photos.map((photo) => (
+                    <div key={photo.url} className="photoCard">
+                      <img src={photo.url} alt={photo.name || "Photo"} loading="lazy" />
                     </div>
                   ))}
                 </div>
